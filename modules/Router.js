@@ -138,7 +138,7 @@ var Router = React.createClass({
             'You may not abort the initial transition'
           );
 
-          this.handleAbort(reason);
+          this.handleAbort(transition.abortReason);
         }
       } else if (state == null) {
         warning(false, 'Location "%s" did not match any routes', location.pathname);
@@ -262,7 +262,7 @@ var Router = React.createClass({
   },
 
   render() {
-    var { location, branch, params, components, isTransitioning } = this.state;
+    var { branch, params, components } = this.state;
     var element = null;
 
     if (components) {
@@ -272,7 +272,7 @@ var Router = React.createClass({
 
         var route = branch[index];
         var routeParams = getRouteParams(route, params);
-        var props = { location, params, route, routeParams, isTransitioning };
+        var props = Object.assign({}, this.state, { route, routeParams });
 
         if (isValidElement(element)) {
           props.children = element;

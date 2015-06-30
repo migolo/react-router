@@ -3,6 +3,7 @@ import expect from 'expect';
 import React, { render } from 'react/addons';
 import Router from '../Router';
 import MemoryHistory from '../MemoryHistory';
+import HashHistory from '../HashHistory';
 import Route from '../Route';
 import Link from '../Link';
 
@@ -55,6 +56,23 @@ describe('A <Link>', function () {
     });
   });
 
+  it('knows how to make its href with HashHistory', function () {
+    var LinkWrapper = React.createClass({
+      render() {
+        return <Link to="/hello/michael" query={{the: 'query'}}>Link</Link>;
+      }
+    });
+
+    render((
+      <Router history={new HashHistory}>
+        <Route path="/" component={LinkWrapper}/>
+      </Router>
+    ), div, function () {
+      var a = div.querySelector('a');
+      expect(a.getAttribute('href')).toEqual('#/hello/michael?the=query');
+    });
+  });
+
   describe('with params', function () {
     var App = React.createClass({
       render() {
@@ -93,6 +111,50 @@ describe('A <Link>', function () {
         expect(a.className.trim()).toEqual('');
         done();
       });
+    });
+  });
+
+  describe('when its route is active and className is empty', function () {
+    it('it shouldn\'t have an active class', function (done) {
+      var LinkWrapper = React.createClass({
+        render() {
+          return (
+            <div>
+              <Link to="hello" className="dontKillMe" activeClassName="">Link</Link>
+              {this.props.children}
+            </div>
+          );
+        }
+      });
+
+      var a, steps = [
+        function () {
+          a = div.querySelector('a');
+          expect(a.className).toEqual('dontKillMe');
+          this.transitionTo('hello');
+        },
+        function () {
+          expect(a.className).toEqual('dontKillMe');
+          done();
+        }
+      ];
+
+      function execNextStep() {
+        try {
+          steps.shift().apply(this, arguments);
+        } catch (error) {
+          done(error);
+        }
+      }
+
+      render((
+        <Router history={new MemoryHistory('/goodbye')} onUpdate={execNextStep}>
+          <Route path="/" component={LinkWrapper}>
+            <Route path="goodbye" component={Goodbye}/>
+            <Route path="hello" component={Hello}/>
+          </Route>
+        </Router>
+      ), div, execNextStep);
     });
   });
 

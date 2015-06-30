@@ -1,14 +1,11 @@
 export var canUseDOM = !!(
-  (typeof window !== 'undefined' &&
-  window.document && window.document.createElement)
+  typeof window !== 'undefined' && window.document && window.document.createElement
 );
 
 export function getHashPath() {
-  return decodeURI(
-    // We can't use window.location.hash here because it's not
-    // consistent across browsers - Firefox will pre-decode it!
-    window.location.href.split('#')[1] || ''
-  );
+  // We can't use window.location.hash here because it's not
+  // consistent across browsers - Firefox will pre-decode it!
+  return window.location.href.split('#')[1] || '';
 }
 
 export function replaceHashPath(path) {
@@ -18,9 +15,7 @@ export function replaceHashPath(path) {
 }
 
 export function getWindowPath() {
-  return decodeURI(
-    window.location.pathname + window.location.search
-  );
+  return window.location.pathname + window.location.search;
 }
 
 export function getWindowScrollPosition() {

@@ -7,7 +7,7 @@ export function stringifyQuery(query) {
   return qs.stringify(query, { arrayFormat: 'brackets' });
 }
 
-var queryMatcher = /\?(.*)$/;
+var queryMatcher = /\?([\s\S]*)$/;
 
 export function getPathname(path) {
   return path.replace(queryMatcher, '');
@@ -50,7 +50,7 @@ function _compilePattern(pattern) {
       regexpSource += '([^/?#]+)';
       paramNames.push(match[1]);
     } else if (match[0] === '*') {
-      regexpSource += '(.*?)';
+      regexpSource += '([\\s\\S]*?)';
       paramNames.push('splat');
     } else if (match[0] === '(') {
       regexpSource += '(?:';
@@ -110,19 +110,23 @@ export function matchPattern(pattern, pathname) {
   var captureRemaining = tokens[tokens.length - 1] !== '*';
 
   if (captureRemaining)
-    regexpSource += '(.*?)';
+    regexpSource += '([\\s\\S]*?)';
 
   var match = pathname.match(new RegExp('^' + regexpSource + '$', 'i'));
 
   var remainingPathname, paramValues;
   if (match != null) {
-    paramValues = Array.prototype.slice.call(match, 1);
+    paramValues = Array.prototype.slice.call(match, 1).map(function (v) {
+      return v != null ? decodeURIComponent(v.replace(/\+/g, '%20')) : v;
+    });
 
     if (captureRemaining) {
       remainingPathname = paramValues.pop();
     } else {
       remainingPathname = pathname.replace(match[0], '');
     }
+  } else {
+    remainingPathname = paramValues = null;
   }
 
   return {
@@ -134,6 +138,19 @@ export function matchPattern(pattern, pathname) {
 
 export function getParamNames(pattern) {
   return compilePattern(pattern).paramNames;
+}
+
+export function getParams(pattern, pathname) {
+  var { paramNames, paramValues } = matchPattern(pattern, stripLeadingSlashes(pathname));
+
+  if (paramValues != null) {
+    return paramNames.reduce(function (memo, paramName, index) {
+      memo[paramName] = paramValues[index];
+      return memo;
+    }, {});
+  }
+
+  return null;
 }
 
 /**
@@ -160,7 +177,7 @@ export function formatPattern(pattern, params) {
       );
 
       if (paramValue != null)
-        pathname += paramValue;
+        pathname += encodeURI(paramValue).replace(/%20/g, '+');
     } else if (token === '(') {
       parenCount += 1;
     } else if (token === ')') {
@@ -176,7 +193,7 @@ export function formatPattern(pattern, params) {
       );
 
       if (paramValue != null)
-        pathname += paramValue;
+        pathname += encodeURIComponent(paramValue).replace(/%20/g, '+');
     } else {
       pathname += token;
     }

@@ -34,7 +34,7 @@ function saveState(path, queryKey, state) {
 function readState(path, queryKey) {
   var sessionKey = getQueryStringValueFromPath(path, queryKey);
   var json = sessionKey && window.sessionStorage.getItem(sessionKey);
-  
+
   if (json) {
     try {
       return JSON.parse(json);
@@ -164,10 +164,10 @@ class HashHistory extends DOMHistory {
     this._notifyChange();
   }
 
-  makeHref(pathname, query) {
-    return '#' + super.makeHref(pathname, query);
+  makeHref(path) {
+    return '#' + path;
   }
-
 }
 
+export var history = new HashHistory;
 export default HashHistory;
