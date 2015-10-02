@@ -1,8 +1,9 @@
-import React from 'react';
-import Dashboard from './Dashboard';
-import Nav from './Nav';
+/*globals COURSES:true */
+import React from 'react'
+import Dashboard from './Dashboard'
+import Nav from './Nav'
 
-var styles = {};
+const styles = {}
 
 styles.sidebar = {
   float: 'left',
@@ -10,38 +11,32 @@ styles.sidebar = {
   padding: 20,
   borderRight: '1px solid #aaa',
   marginRight: 20
-};
+}
 
 class Course extends React.Component {
+  render() {
+    let { children, params } = this.props
+    let course = COURSES[params.courseId]
 
-  static loadProps (params, cb) {
-    console.log('Course', 'loadProps');
-    setTimeout(() => cb(null, { course: COURSES[params.courseId] }), 1000);
-  }
-
-  render () {
-    var { course } = this.props;
     return (
       <div>
         <h2>{course.name}</h2>
-        <Nav course={course}/>
-        {this.props.sidebar && this.props.main ? (
+        <Nav course={course} />
+        {children && children.sidebar && children.main ? (
           <div>
             <div className="Sidebar" style={styles.sidebar}>
-              {this.props.sidebar}
+              {children.sidebar}
             </div>
-            <div className="Main" style={{padding: 20}}>
-              {this.props.main}
+            <div className="Main" style={{ padding: 20 }}>
+              {children.main}
             </div>
           </div>
         ) : (
-          <Dashboard/>
+          <Dashboard />
         )}
       </div>
-    );
+    )
   }
-
 }
 
-export default Course;
-
+export default Course

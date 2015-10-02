@@ -1,40 +1,48 @@
-import React, { isValidElement } from 'react';
-import warning from 'warning';
+import React from 'react'
+import warning from 'warning'
 
 function isValidChild(object) {
-  return object == null || isValidElement(object);
+  return object == null || React.isValidElement(object)
 }
 
 export function isReactChildren(object) {
-  return isValidChild(object) || (Array.isArray(object) && object.every(isValidChild));
+  return isValidChild(object) || (Array.isArray(object) && object.every(isValidChild))
 }
 
 function checkPropTypes(componentName, propTypes, props) {
-  componentName = componentName || 'UnknownComponent';
+  componentName = componentName || 'UnknownComponent'
 
-  for (var propName in propTypes) {
+  for (const propName in propTypes) {
     if (propTypes.hasOwnProperty(propName)) {
-      var error = propTypes[propName](props, propName, componentName);
+      const error = propTypes[propName](props, propName, componentName)
 
       if (error instanceof Error)
-        warning(false, error.message);
+        warning(false, error.message)
     }
   }
 }
 
+function createRoute(defaultProps, props) {
+  return { ...defaultProps, ...props }
+}
+
 export function createRouteFromReactElement(element) {
-  var type = element.type;
-  var route = Object.assign({}, type.defaultProps, element.props);
+  const type = element.type
+  const route = createRoute(type.defaultProps, element.props)
 
   if (type.propTypes)
-    checkPropTypes(type.displayName || type.name, type.propTypes, route);
+    checkPropTypes(type.displayName || type.name, type.propTypes, route)
 
   if (route.children) {
-    route.childRoutes = createRoutesFromReactChildren(route.children);
-    delete route.children;
+    const childRoutes = createRoutesFromReactChildren(route.children, route)
+
+    if (childRoutes.length)
+      route.childRoutes = childRoutes
+
+    delete route.children
   }
 
-  return route;
+  return route
 }
 
 /**
@@ -42,33 +50,36 @@ export function createRouteFromReactElement(element) {
  * provides a convenient way to visualize how routes in the hierarchy are
  * nested.
  *
- *   import { Route, createRoutesFromReactChildren } from 'react-router';
+ *   import { Route, createRoutesFromReactChildren } from 'react-router'
  *   
- *   var routes = createRoutesFromReactChildren(
+ *   const routes = createRoutesFromReactChildren(
  *     <Route component={App}>
  *       <Route path="home" component={Dashboard}/>
  *       <Route path="news" component={NewsFeed}/>
  *     </Route>
- *   );
+ *   )
  *
  * Note: This method is automatically used when you provide <Route> children
  * to a <Router> component.
  */
-export function createRoutesFromReactChildren(children) {
-  var routes = [];
+export function createRoutesFromReactChildren(children, parentRoute) {
+  const routes = []
 
   React.Children.forEach(children, function (element) {
-    if (isValidElement(element)) {
+    if (React.isValidElement(element)) {
       // Component classes may have a static create* method.
       if (element.type.createRouteFromReactElement) {
-        routes.push(element.type.createRouteFromReactElement(element));
+        const route = element.type.createRouteFromReactElement(element, parentRoute)
+
+        if (route)
+          routes.push(route)
       } else {
-        routes.push(createRouteFromReactElement(element));
+        routes.push(createRouteFromReactElement(element))
       }
     }
-  });
+  })
 
-  return routes;
+  return routes
 }
 
 /**
@@ -77,10 +88,10 @@ export function createRoutesFromReactChildren(children) {
  */
 export function createRoutes(routes) {
   if (isReactChildren(routes)) {
-    routes = createRoutesFromReactChildren(routes);
+    routes = createRoutesFromReactChildren(routes)
   } else if (!Array.isArray(routes)) {
-    routes = [ routes ];
+    routes = [ routes ]
   }
 
-  return routes;
+  return routes
 }

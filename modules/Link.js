@@ -1,42 +1,52 @@
-import React from 'react';
+import React from 'react'
+import warning from 'warning'
 
-var { object, string, func } = React.PropTypes;
+const { bool, object, string, func } = React.PropTypes
 
 function isLeftClickEvent(event) {
-  return event.button === 0;
+  return event.button === 0
 }
 
 function isModifiedEvent(event) {
-  return !!(event.metaKey || event.altKey || event.ctrlKey || event.shiftKey);
+  return !!(event.metaKey || event.altKey || event.ctrlKey || event.shiftKey)
+}
+
+function isEmptyObject(object) {
+  for (const p in object)
+    if (object.hasOwnProperty(p))
+      return false
+
+  return true
 }
 
 /**
- * <Link> components are used to create an <a> element that links to a route.
- * When that route is active, the link gets an "active" class name (or the
- * value of its `activeClassName` prop).
+ * A <Link> is used to create an <a> element that links to a route.
+ * When that route is active, the link gets an "active" class name
+ * (or the value of its `activeClassName` prop).
  *
  * For example, assuming you have the following route:
  *
- *   <Route name="showPost" path="/posts/:postID" handler={Post}/>
+ *   <Route path="/posts/:postID" component={Post} />
  *
  * You could use the following component to link to that route:
  *
  *   <Link to={`/posts/${post.id}`} />
  *
- * Links may pass along query string parameters
- * using the `query` prop.
+ * Links may pass along location state and/or query string parameters
+ * in the state/query props, respectively.
  *
- *   <Link to="/posts/123" query={{ show:true }}/>
+ *   <Link ... query={{ show: true }} state={{ the: 'state' }} />
  */
-export var Link = React.createClass({
+const Link = React.createClass({
 
   contextTypes: {
-    router: object
+    history: object
   },
 
   propTypes: {
     activeStyle: object,
     activeClassName: string,
+    onlyActiveOnIndex: bool.isRequired,
     to: string.isRequired,
     query: object,
     state: object,
@@ -45,52 +55,64 @@ export var Link = React.createClass({
 
   getDefaultProps() {
     return {
+      onlyActiveOnIndex: false,
       className: '',
-      activeClassName: 'active',
       style: {}
-    };
+    }
   },
 
   handleClick(event) {
-    var allowTransition = true;
-    var clickResult;
+    let allowTransition = true, clickResult
 
     if (this.props.onClick)
-      clickResult = this.props.onClick(event);
+      clickResult = this.props.onClick(event)
 
     if (isModifiedEvent(event) || !isLeftClickEvent(event))
-      return;
+      return
 
     if (clickResult === false || event.defaultPrevented === true)
-      allowTransition = false;
+      allowTransition = false
 
-    event.preventDefault();
+    event.preventDefault()
 
     if (allowTransition)
-      this.context.router.transitionTo(this.props.to, this.props.query, this.props.state);
+      this.context.history.pushState(this.props.state, this.props.to, this.props.query)
+  },
+
+  componentWillMount() {
+    warning(
+      this.context.history,
+      'A <Link> should not be rendered outside the context of history ' +
+      'some features including real hrefs, active styling, and navigation ' +
+      'will not function correctly'
+    )
   },
 
   render() {
-    var { router } = this.context;
-    var { to, query } = this.props;
+    const { history } = this.context
+    const { activeClassName, activeStyle, onlyActiveOnIndex, to, query, state, onClick, ...props } = this.props
 
-    var props = Object.assign({}, this.props, {
-      href: router.makeHref(to, query),
-      onClick: this.handleClick
-    });
+    props.onClick = this.handleClick
 
-    // ignore if rendered outside of the context of a router, simplifies unit testing
-    if (router && router.isActive(to, query)) {
-      if (props.activeClassName)
-        props.className += props.className !== '' ? ` ${props.activeClassName}` : props.activeClassName;
+    // Ignore if rendered outside the context
+    // of history, simplifies unit testing.
+    if (history) {
+      props.href = history.createHref(to, query)
 
-      if (props.activeStyle)
-        props.style = Object.assign({}, props.style, props.activeStyle);
+      if (activeClassName || (activeStyle != null && !isEmptyObject(activeStyle))) {
+        if (history.isActive(to, query, onlyActiveOnIndex)) {
+          if (activeClassName)
+            props.className += props.className === '' ? activeClassName : ` ${activeClassName}`
+
+          if (activeStyle)
+            props.style = { ...props.style, ...activeStyle }
+        }
+      }
     }
 
-    return React.createElement('a', props);
+    return React.createElement('a', props)
   }
 
-});
+})
 
-export default Link;
+export default Link

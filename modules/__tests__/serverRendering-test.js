@@ -1,64 +1,118 @@
-import expect from 'expect';
-import React, { createClass, renderToString } from 'react';
-import Location from '../Location';
-import Router from '../Router';
-import Link from '../Link';
+/*eslint-env mocha */
+/*eslint react/prop-types: 0*/
+import expect from 'expect'
+import React from 'react'
+import createLocation from 'history/lib/createLocation'
+import RoutingContext from '../RoutingContext'
+import match from '../match'
+import Link from '../Link'
 
-describe('Server rendering', function () {
-  var Dashboard, Inbox, DashboardRoute, InboxRoute, RedirectToInboxRoute, routes;
+describe('server rendering', function () {
+
+  let App, Dashboard, About, RedirectRoute, AboutRoute, DashboardRoute, routes
   beforeEach(function () {
-    Dashboard = createClass({
+    App = React.createClass({
+      render() {
+        return (
+          <div className="App">
+            <h1>App</h1>
+            <Link to="/about" activeClassName="about-is-active">About</Link>{' '}
+            <Link to="/dashboard" activeClassName="dashboard-is-active">Dashboard</Link>
+            <div>
+              {this.props.children}
+            </div>
+          </div>
+        )
+      }
+    })
+
+    Dashboard = React.createClass({
       render() {
         return (
           <div className="Dashboard">
             <h1>The Dashboard</h1>
-            {this.props.children}
           </div>
-        );
+        )
       }
-    });
- 
-    Inbox = createClass({
+    })
+
+    About = React.createClass({
       render() {
-        return <div>Inbox <Link to="/">Go to the dashboard</Link></div>;
+        return (
+          <div className="About">
+            <h1>About</h1>
+          </div>
+        )
       }
-    });
- 
+    })
+
     DashboardRoute = {
-      component: Dashboard,
-      getChildRoutes(locationState, callback) {
-        setTimeout(function () {
-          callback(null, [ InboxRoute, RedirectToInboxRoute ]);
-        }, 0);
-      }
-    };
+      path: '/dashboard',
+      component: Dashboard
+    }
 
-    InboxRoute = {
-      path: 'inbox',
-      component: Inbox
-    };
+    AboutRoute = {
+      path: '/about',
+      component: About
+    }
 
-    RedirectToInboxRoute = {
-      path: 'redirect-to-inbox',
-      onEnter(nextState, transition) {
-        transition.to('/inbox');
+    RedirectRoute = {
+      path: '/company',
+      onEnter(nextState, replaceState) {
+        replaceState(null, '/about')
       }
-    };
- 
-    routes = [
-      DashboardRoute
-    ];
-  });
-  
+    }
+
+    routes = {
+      path: '/',
+      component: App,
+      childRoutes: [ DashboardRoute, AboutRoute, RedirectRoute ]
+    }
+  })
+
   it('works', function (done) {
-    var location = new Location('/inbox');
+    const location = createLocation('/dashboard')
+    match({ routes, location }, function (error, redirectLocation, renderProps) {
+      const string = React.renderToString(
+        <RoutingContext {...renderProps} />
+      )
+      expect(string).toMatch(/The Dashboard/)
+      done()
+    })
+  })
 
-    Router.run(routes, location, function (error, state, transition) {
-      var string = renderToString(<Router {...state}/>);
-      expect(string).toMatch(/Dashboard/);
-      expect(string).toMatch(/Inbox/);
-      done();
-    });
-  });
+  it('renders active Links as active', function (done) {
+    const location = createLocation('/about')
+    match({ routes, location }, function (error, redirectLocation, renderProps) {
+      const string = React.renderToString(
+        <RoutingContext {...renderProps} />
+      )
+      expect(string).toMatch(/about-is-active/)
+      //expect(string).toNotMatch(/dashboard-is-active/) TODO add toNotMatch to expect
+      done()
+    })
+  })
 
-});
+  it('sends the redirect location', function (done) {
+    const location = createLocation('/company')
+    match({ routes, location }, function (error, redirectLocation) {
+      expect(redirectLocation).toExist()
+      expect(redirectLocation.pathname).toEqual('/about')
+      expect(redirectLocation.search).toEqual('')
+      expect(redirectLocation.state).toEqual(null)
+      expect(redirectLocation.action).toEqual('REPLACE')
+      done()
+    })
+  })
+
+  it('sends null values when no routes match', function (done) {
+    const location = createLocation('/no-match')
+    match({ routes, location }, function (error, redirectLocation, state) {
+      expect(error).toBe(null)
+      expect(redirectLocation).toBe(null)
+      expect(state).toBe(null)
+      done()
+    })
+  })
+
+})

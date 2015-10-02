@@ -1,10 +1,9 @@
 module.exports = {
   path: ':announcementId',
 
-  getComponents (cb) {
+  getComponent(location, cb) {
     require.ensure([], (require) => {
-      cb(null, require('./components/Announcement'));
+      cb(null, require('./components/Announcement'))
     })
   }
-};
-
+}

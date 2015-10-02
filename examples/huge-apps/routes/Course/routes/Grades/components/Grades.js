@@ -1,17 +1,10 @@
-import React from 'react';
+/*globals COURSES:true */
+import React from 'react'
 
 class Grades extends React.Component {
+  render() {
+    let { assignments } = COURSES[this.props.params.courseId]
 
-  //static loadProps (params, cb) {
-    //cb(null, {
-      //assignments: COURSES[params.courseId].assignments
-    //});
-  //}
-
-
-  render () {
-    //var { assignments } = this.props;
-    var assignments = COURSES[this.props.params.courseId].assignments;
     return (
       <div>
         <h3>Grades</h3>
@@ -21,9 +14,8 @@ class Grades extends React.Component {
           ))}
         </ul>
       </div>
-    );
+    )
   }
 }
 
-export default Grades;
-
+export default Grades

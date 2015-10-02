@@ -1,20 +1,19 @@
 module.exports = {
   path: 'course/:courseId',
 
-  getChildRoutes (state, cb) {
+  getChildRoutes(location, cb) {
     require.ensure([], (require) => {
       cb(null, [
         require('./routes/Announcements'),
         require('./routes/Assignments'),
-        require('./routes/Grades'),
+        require('./routes/Grades')
       ])
     })
   },
 
-  getComponents (cb) {
+  getComponent(location, cb) {
     require.ensure([], (require) => {
       cb(null, require('./components/Course'))
     })
   }
-};
-
+}

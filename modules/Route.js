@@ -1,10 +1,10 @@
-import React from 'react';
-import invariant from 'invariant';
-import { createRouteFromReactElement } from './RouteUtils';
-import { component, components } from './PropTypes';
-import warning from 'warning';
+import React from 'react'
+import warning from 'warning'
+import invariant from 'invariant'
+import { createRouteFromReactElement } from './RouteUtils'
+import { component, components } from './PropTypes'
 
-var { string, bool, func } = React.PropTypes;
+const { string, bool, func } = React.PropTypes
 
 /**
  * A <Route> is used to declare which components are rendered to the page when
@@ -16,20 +16,24 @@ var { string, bool, func } = React.PropTypes;
  * "active" and their components are rendered into the DOM, nested in the same
  * order as they are in the tree.
  */
-export var Route = React.createClass({
+const Route = React.createClass({
 
   statics: {
 
     createRouteFromReactElement(element) {
-      var route = createRouteFromReactElement(element);
+      const route = createRouteFromReactElement(element)
 
       if (route.handler) {
-        warning(false, '<Route handler> is deprecated, use <Route component> instead');
-        route.component = route.handler;
-        delete route.handler;
+        warning(
+          false,
+          '<Route handler> is deprecated, use <Route component> instead'
+        )
+
+        route.component = route.handler
+        delete route.handler
       }
 
-      return route;
+      return route
     }
   
   },
@@ -37,7 +41,7 @@ export var Route = React.createClass({
   propTypes: {
     path: string,
     ignoreScrollBehavior: bool,
-    handler: component,
+    handler: component, // deprecated
     component,
     components,
     getComponents: func
@@ -47,9 +51,9 @@ export var Route = React.createClass({
     invariant(
       false,
       '<Route> elements are for router configuration only and should not be rendered'
-    );
+    )
   }
 
-});
+})
 
-export default Route;
+export default Route

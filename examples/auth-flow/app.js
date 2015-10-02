@@ -1,25 +1,28 @@
-import React, { findDOMNode } from 'react';
-import { Router, Route, Link, Navigation } from 'react-router';
-import HashHistory from 'react-router/lib/HashHistory';
-import auth from './auth';
-var history = new HashHistory({ queryKey: true });
+import React, { findDOMNode } from 'react'
+import { Router, Route, Link, History } from 'react-router'
+import { createHistory, useBasename } from 'history'
+import auth from './auth'
+
+const history = useBasename(createHistory)({
+  basename: '/auth-flow'
+})
 
 var App = React.createClass({
   getInitialState() {
     return {
       loggedIn: auth.loggedIn()
-    };
+    }
   },
 
-  setStateOnAuth(loggedIn) {
+  updateAuth(loggedIn) {
     this.setState({
       loggedIn: loggedIn
-    });
+    })
   },
 
   componentWillMount() {
-    auth.onChange = this.setStateOnAuth;
-    auth.login();
+    auth.onChange = this.updateAuth
+    auth.login()
   },
 
   render() {
@@ -38,95 +41,95 @@ var App = React.createClass({
         </ul>
         {this.props.children}
       </div>
-    );
+    )
   }
-});
+})
 
 var Dashboard = React.createClass({
   render() {
-    var token = auth.getToken();
+    var token = auth.getToken()
+
     return (
       <div>
         <h1>Dashboard</h1>
         <p>You made it!</p>
         <p>{token}</p>
       </div>
-    );
+    )
   }
-});
+})
 
 var Login = React.createClass({
-
-  mixins: [ Navigation ],
+  mixins: [ History ],
 
   getInitialState() {
     return {
       error: false
-    };
+    }
   },
 
   handleSubmit(event) {
-    event.preventDefault();
+    event.preventDefault()
 
-    var email = findDOMNode(this.refs.email).value;
-    var pass = findDOMNode(this.refs.pass).value;
+    var email = findDOMNode(this.refs.email).value
+    var pass = findDOMNode(this.refs.pass).value
 
     auth.login(email, pass, (loggedIn) => {
       if (!loggedIn)
-        return this.setState({ error: true });
+        return this.setState({ error: true })
 
-      var { location } = this.props;
+      var { location } = this.props
 
       if (location.state && location.state.nextPathname) {
-        this.replaceWith(location.state.nextPathname);
+        this.history.replaceState(null, location.state.nextPathname)
       } else {
-        this.replaceWith('/about');
+        this.history.replaceState(null, '/about')
       }
-    });
+    })
   },
 
   render() {
     return (
       <form onSubmit={this.handleSubmit}>
-        <label><input ref="email" placeholder="email" defaultValue="joe@example.com"/></label>
-        <label><input ref="pass" placeholder="password"/></label> (hint: password1)<br/>
+        <label><input ref="email" placeholder="email" defaultValue="joe@example.com" /></label>
+        <label><input ref="pass" placeholder="password" /></label> (hint: password1)<br />
         <button type="submit">login</button>
         {this.state.error && (
           <p>Bad login information</p>
         )}
       </form>
-    );
+    )
   }
-});
+})
 
 var About = React.createClass({
   render() {
-    return <h1>About</h1>;
+    return <h1>About</h1>
   }
-});
+})
 
 var Logout = React.createClass({
   componentDidMount() {
-    auth.logout();
+    auth.logout()
   },
 
   render() {
-    return <p>You are now logged out</p>;
+    return <p>You are now logged out</p>
   }
-});
+})
 
-function requireAuth(nextState, transition) {
+function requireAuth(nextState, replaceState) {
   if (!auth.loggedIn())
-    transition.to('/login', null, { nextPathname: nextState.location.pathname });
+    replaceState({ nextPathname: nextState.location.pathname }, '/login')
 }
 
 React.render((
   <Router history={history}>
     <Route path="/" component={App}>
-      <Route path="login" component={Login}/>
-      <Route path="logout" component={Logout}/>
-      <Route path="about" component={About}/>
-      <Route path="dashboard" component={Dashboard} onEnter={requireAuth}/>
+      <Route path="login" component={Login} />
+      <Route path="logout" component={Logout} />
+      <Route path="about" component={About} />
+      <Route path="dashboard" component={Dashboard} onEnter={requireAuth} />
     </Route>
   </Router>
-), document.getElementById('example'));
+), document.getElementById('example'))

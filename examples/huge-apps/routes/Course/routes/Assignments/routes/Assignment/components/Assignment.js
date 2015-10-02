@@ -1,26 +1,18 @@
-import React from 'react';
+/*globals COURSES:true */
+import React from 'react'
 
 class Assignment extends React.Component {
+  render() {
+    let { courseId, assignmentId } = this.props.params
+    let { title, body } = COURSES[courseId].assignments[assignmentId]
 
-  //static loadProps (params, cb) {
-    //cb(null, {
-      //assignment: COURSES[params.courseId].assignments[params.assignmentId]
-    //});
-  //}
-
-  render () {
-    //var { title, body } = this.props.assignment;
-    var { courseId, assignmentId } = this.props.params;
-    var { title, body } = COURSES[courseId].assignments[assignmentId]
     return (
       <div>
         <h4>{title}</h4>
         <p>{body}</p>
       </div>
-    );
+    )
   }
-
 }
 
-export default Assignment;
-
+export default Assignment
